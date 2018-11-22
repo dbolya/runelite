@@ -818,8 +818,8 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 				Dimension dim = client.getStretchedDimensions();
 				renderCanvasHeight = dim.height;
 
-				float scaleFactorY = dim.height / (float) canvasHeight;
-				float scaleFactorX = dim.width  / (float) canvasWidth;
+				double scaleFactorY = dim.getHeight() / canvasHeight;
+				double scaleFactorX = dim.getWidth()  / canvasWidth;
 
 				renderViewportHeight *= scaleFactorY;
 				renderViewportWidth  *= scaleFactorX;
@@ -921,18 +921,15 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			gl.glDisable(gl.GL_BLEND);
 		}
 
-
-		int renderCanvasWidth = canvasWidth;
-		int renderCanvasHeight = canvasHeight;
-
 		if (client.isStretchedEnabled())
 		{
 			Dimension dim = client.getStretchedDimensions();
-			renderCanvasWidth = dim.width;
-			renderCanvasHeight = dim.height;
+			gl.glViewport(0, 0, dim.width, dim.height);
 		}
-
-		gl.glViewport(0, 0, renderCanvasWidth, renderCanvasHeight);
+		else
+		{
+			gl.glViewport(0, 0, canvasWidth, canvasHeight);
+		}
 
 		vertexBuffer.clear(); // reuse vertex buffer for interface
 		vertexBuffer.ensureCapacity(pixels.length);
@@ -962,8 +959,9 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		gl.glBindTexture(gl.GL_TEXTURE_2D, interfaceTexture);
 		gl.glUniform1i(uniTex, 0);
 
-		// If necessary, change the sampling function. Honestly, this should be using OpenGL
-		// sampler objects instead of modifying the texture directly, but this is easier.
+		// Sets the sampling function used when stretching the UI.
+		// This is probably better done with sampler objects instead of texture parameters, but this is easier and likely more portable.
+		// See https://www.khronos.org/opengl/wiki/Sampler_Object for details.
 		if (client.isStretchedEnabled())
 		{
 			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, client.isStretchedFast() ? gl.GL_NEAREST : gl.GL_LINEAR);
