@@ -677,8 +677,8 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			return;
 		}
 
-		int canvasHeight = client.getCanvasHeight();
-		int canvasWidth = client.getCanvasWidth();
+		final int canvasHeight = client.getCanvasHeight();
+		final int canvasWidth = client.getCanvasWidth();
 
 		final int viewportHeight = client.getViewportHeight();
 		final int viewportWidth = client.getViewportWidth();
@@ -805,19 +805,24 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			}
 
 			final Texture[] textures = textureProvider.getTextures();
-			final int heightOff = client.getViewportYOffset();
-			final int widthOff = client.getViewportXOffset();
-			int renderCanvasWidth = canvasWidth;
+			int renderHeightOff = client.getViewportYOffset();
+			int renderWidthOff = client.getViewportXOffset();
 			int renderCanvasHeight = canvasHeight;
+			int renderViewportHeight = viewportHeight;
+			int renderViewportWidth = viewportWidth;
 
 			if (client.isStretchedEnabled())
 			{
 				Dimension dim = client.getStretchedDimensions();
-				renderCanvasWidth = dim.width;
 				renderCanvasHeight = dim.height;
+				float scaleFactor = renderCanvasHeight / (float) canvasHeight;
+				renderViewportHeight *= scaleFactor;
+				renderViewportWidth  *= scaleFactor;
+				renderHeightOff      *= scaleFactor;
+				renderWidthOff       *= scaleFactor;
 			}
 
-			gl.glViewport(widthOff,  - heightOff, renderCanvasWidth, renderCanvasHeight);
+			gl.glViewport(renderWidthOff, renderCanvasHeight - renderViewportHeight - renderHeightOff, renderViewportWidth, renderViewportHeight);
 
 			gl.glUseProgram(glProgram);
 
