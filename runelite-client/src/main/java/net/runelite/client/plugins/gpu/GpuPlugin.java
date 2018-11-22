@@ -40,8 +40,8 @@ import com.jogamp.opengl.GLDrawable;
 import com.jogamp.opengl.GLDrawableFactory;
 import com.jogamp.opengl.GLException;
 import com.jogamp.opengl.GLProfile;
-import java.awt.Canvas;
-import java.awt.Image;
+
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.nio.ByteBuffer;
@@ -613,8 +613,14 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			return;
 		}
 
-		final int canvasHeight = client.getCanvasHeight();
-		final int canvasWidth = client.getCanvasWidth();
+		int canvasHeight = client.getCanvasHeight();
+		int canvasWidth = client.getCanvasWidth();
+		if (client.isStretchedEnabled())
+		{
+			Dimension dim = client.getStretchedDimensions();
+			canvasWidth = dim.width;
+			canvasHeight = dim.height;
+		}
 
 		final int viewportHeight = client.getViewportHeight();
 		final int viewportWidth = client.getViewportWidth();
@@ -744,7 +750,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			final int heightOff = client.getViewportYOffset();
 			final int widthOff = client.getViewportXOffset();
 
-			gl.glViewport(widthOff, canvasHeight - viewportHeight - heightOff, viewportWidth, viewportHeight);
+			gl.glViewport(widthOff,  - heightOff, canvasWidth, canvasHeight);
 
 			gl.glUseProgram(glProgram);
 
@@ -824,8 +830,15 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		drawManager.processDrawComplete(this::screenshot);
 	}
 
-	private void drawUi(final int canvasHeight, final int canvasWidth)
+	private void drawUi(int canvasHeight, int canvasWidth)
 	{
+		if (client.isStretchedEnabled())
+		{
+			Dimension dim = client.getStretchedDimensions();
+			canvasHeight = dim.height;
+			canvasWidth = dim.width;
+		}
+
 		final BufferProvider bufferProvider = client.getBufferProvider();
 		final int[] pixels = bufferProvider.getPixels();
 		final int width = bufferProvider.getWidth();
@@ -1010,10 +1023,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 					{
 						int var21 = (pitchCos * modelHeight >> 16) + var19;
 						int var22 = (var18 - var21) * zoom;
-						if (var22 / var14 < Rasterizer3D_clipMidY2)
-						{
-							return true;
-						}
+						return var22 / var14 < Rasterizer3D_clipMidY2;
 					}
 				}
 			}
