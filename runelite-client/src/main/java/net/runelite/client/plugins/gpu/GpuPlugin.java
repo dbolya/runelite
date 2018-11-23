@@ -151,10 +151,6 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 	// scene uv buffer id
 	private int uvBufferId;
 
-	private int fboStretchedHandle;
-	private int texStretchedHandle;
-	private int rboStretchedHandle;
-
 	private int textureArrayId;
 
 	private int uniformBufferId;
@@ -196,7 +192,6 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 	private int lastViewportHeight;
 	private int lastCanvasWidth;
 	private int lastCanvasHeight;
-	private Dimension lastStretchedDimensions;
 
 	private int centerX;
 	private int centerY;
@@ -287,7 +282,6 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 				client.resizeCanvas();
 
 				lastViewportWidth = lastViewportHeight = lastCanvasWidth = lastCanvasHeight = -1;
-				lastStretchedDimensions = null;
 
 				textureArrayId = -1;
 
