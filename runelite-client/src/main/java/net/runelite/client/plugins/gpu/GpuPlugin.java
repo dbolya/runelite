@@ -38,7 +38,6 @@ import com.jogamp.opengl.GLDrawable;
 import com.jogamp.opengl.GLDrawableFactory;
 import com.jogamp.opengl.GLException;
 import com.jogamp.opengl.GLProfile;
-
 import java.awt.Canvas;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -193,7 +192,6 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 	private int lastViewportHeight;
 	private int lastCanvasWidth;
 	private int lastCanvasHeight;
-	private Dimension lastStretchedDimensions;
 
 	private int centerX;
 	private int centerY;
@@ -284,7 +282,6 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 				client.resizeCanvas();
 
 				lastViewportWidth = lastViewportHeight = lastCanvasWidth = lastCanvasHeight = -1;
-				lastStretchedDimensions = null;
 
 				textureArrayId = -1;
 
@@ -537,9 +534,8 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		gl.glBindTexture(gl.GL_TEXTURE_2D, interfaceTexture);
 		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT);
 		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT);
-		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, client.isStretchedFast() ? gl.GL_NEAREST : gl.GL_LINEAR);
-		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, client.isStretchedFast() ? gl.GL_NEAREST : gl.GL_LINEAR);
-
+		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR);
+		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR);
 		gl.glBindTexture(gl.GL_TEXTURE_2D, 0);
 	}
 
@@ -815,11 +811,14 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			{
 				Dimension dim = client.getStretchedDimensions();
 				renderCanvasHeight = dim.height;
-				float scaleFactor = renderCanvasHeight / (float) canvasHeight;
-				renderViewportHeight *= scaleFactor;
-				renderViewportWidth  *= scaleFactor;
-				renderHeightOff      *= scaleFactor;
-				renderWidthOff       *= scaleFactor;
+
+				double scaleFactorY = dim.getHeight() / canvasHeight;
+				double scaleFactorX = dim.getWidth()  / canvasWidth;
+
+				renderViewportHeight *= scaleFactorY;
+				renderViewportWidth  *= scaleFactorX;
+				renderHeightOff      *= scaleFactorY;
+				renderWidthOff       *= scaleFactorX;
 			}
 
 			gl.glViewport(renderWidthOff, renderCanvasHeight - renderViewportHeight - renderHeightOff, renderViewportWidth, renderViewportHeight);
@@ -916,18 +915,15 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			gl.glDisable(gl.GL_BLEND);
 		}
 
-
-		int renderCanvasWidth = canvasWidth;
-		int renderCanvasHeight = canvasHeight;
-
 		if (client.isStretchedEnabled())
 		{
 			Dimension dim = client.getStretchedDimensions();
-			renderCanvasWidth = dim.width;
-			renderCanvasHeight = dim.height;
+			gl.glViewport(0, 0, dim.width, dim.height);
 		}
-
-		gl.glViewport(0, 0, renderCanvasWidth, renderCanvasHeight);
+		else
+		{
+			gl.glViewport(0, 0, canvasWidth, canvasHeight);
+		}
 
 		vertexBuffer.clear(); // reuse vertex buffer for interface
 		vertexBuffer.ensureCapacity(pixels.length);
@@ -956,6 +952,15 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		gl.glActiveTexture(gl.GL_TEXTURE0);
 		gl.glBindTexture(gl.GL_TEXTURE_2D, interfaceTexture);
 		gl.glUniform1i(uniTex, 0);
+
+		// Sets the sampling function used when stretching the UI.
+		// This is probably better done with sampler objects instead of texture parameters, but this is easier and likely more portable.
+		// See https://www.khronos.org/opengl/wiki/Sampler_Object for details.
+		if (client.isStretchedEnabled())
+		{
+			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, client.isStretchedFast() ? gl.GL_NEAREST : gl.GL_LINEAR);
+			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, client.isStretchedFast() ? gl.GL_NEAREST : gl.GL_LINEAR);
+		}
 
 		// Texture on UI
 		gl.glBindVertexArray(vaoUiHandle);
@@ -1097,7 +1102,10 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 					{
 						int var21 = (pitchCos * modelHeight >> 16) + var19;
 						int var22 = (var18 - var21) * zoom;
-						return var22 / var14 < Rasterizer3D_clipMidY2;
+						if (var22 / var14 < Rasterizer3D_clipMidY2)
+						{
+							return true;
+						}
 					}
 				}
 			}
