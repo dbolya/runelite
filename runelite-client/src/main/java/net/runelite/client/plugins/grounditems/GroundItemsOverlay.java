@@ -194,7 +194,7 @@ public class GroundItemsOverlay extends Overlay
 
 			final Color color = plugin.getItemColor(highlighted, hidden);
 
-			if (config.highlightTiles())
+			if (config.highlightTiles() && !color.equals(config.defaultColor()))
 			{
 				final Polygon poly = Perspective.getCanvasTilePoly(client, groundPoint);
 
