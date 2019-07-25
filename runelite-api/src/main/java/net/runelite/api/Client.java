@@ -29,6 +29,7 @@ import java.awt.Dimension;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.runelite.api.annotations.VisibleForDevtools;
 import net.runelite.api.coords.LocalPoint;
@@ -346,6 +347,7 @@ public interface Client extends GameEngine
 	 * @return the corresponding item composition
 	 * @see ItemID
 	 */
+	@Nonnull
 	ItemComposition getItemDefinition(int id);
 
 	/**
@@ -360,6 +362,7 @@ public interface Client extends GameEngine
 	 * @param scale the scale of the sprite
 	 * @return the created sprite
 	 */
+	@Nullable
 	SpritePixels createItemSprite(int itemId, int quantity, int border, int shadowColor, int stackable, boolean noted, int scale);
 
 	/**
@@ -370,6 +373,7 @@ public interface Client extends GameEngine
 	 * @param fileId the sprites file ID
 	 * @return the sprite image of the file
 	 */
+	@Nullable
 	SpritePixels[] getSprites(IndexDataBase source, int archiveId, int fileId);
 
 	/**
@@ -408,23 +412,6 @@ public interface Client extends GameEngine
 	 * @return the pressed mouse button
 	 */
 	int getMouseCurrentButton();
-
-	/**
-	 * Schedules checking of current region tile for next frame, so ${@link Client#getSelectedSceneTile()} ()} will
-	 * return actual value.
-	 *
-	 * @param checkClick when true next frame selected region tile will be updated
-	 */
-	void setCheckClick(boolean checkClick);
-
-	/**
-	 * Sets current mouse hover position. This value is automatically updated only when right-clicking in game.
-	 * Setting this value together with ${@link Client#setCheckClick(boolean)} will update ${@link Client#getSelectedSceneTile()} ()}
-	 * for next frame.
-	 *
-	 * @param position current mouse hover position
-	 */
-	void setMouseCanvasHoverPosition(Point position);
 
 	/**
 	 * Gets the currently selected tile (ie. last right clicked tile).
@@ -968,6 +955,28 @@ public interface Client extends GameEngine
 	 * from
 	 */
 	void playSoundEffect(int id, int x, int y, int range);
+
+	/**
+	 * Play a sound effect from some point in the world.
+	 *
+	 * @param id the ID of the sound to play. Any int is allowed, but see
+	 * {@link SoundEffectID} for some common ones
+	 * @param x the ground coordinate on the x axis
+	 * @param y the ground coordinate on the y axis
+	 * @param range the number of tiles away that the sound can be heard
+	 * from
+	 * @param delay the amount of frames before the sound starts playing
+	 */
+	void playSoundEffect(int id, int x, int y, int range, int delay);
+
+	/**
+	 * Plays a sound effect, even if the player's sound effect volume is muted.
+	 *
+	 * @param id     the ID of the sound effect - {@link SoundEffectID}
+	 * @param volume the volume to play the sound effect at, see {@link SoundEffectVolume} for values used
+	 *               in the settings interface. if the sound effect volume is not muted, uses the set volume
+	 */
+	void playSoundEffect(int id, int volume);
 
 	/**
 	 * Gets the clients graphic buffer provider.
@@ -1627,9 +1636,19 @@ public interface Client extends GameEngine
 	 */
 	NodeCache getItemCompositionCache();
 
+	/**
+	 * Returns the array of cross sprites that appear and animate when left-clicking
+	 */
+	SpritePixels[] getCrossSprites();
+
 	EnumComposition getEnum(int id);
 
 	void draw2010Menu();
 
 	void resetHealthBarCaches();
+
+	/**
+	 * Returns the max item index + 1 from cache
+	 */
+	int getItemCount();
 }
