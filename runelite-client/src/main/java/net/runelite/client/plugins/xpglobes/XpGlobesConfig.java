@@ -29,6 +29,7 @@ import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.Units;
 
 @ConfigGroup("xpglobes")
 public interface XpGlobesConfig extends Config
@@ -141,6 +142,7 @@ public interface XpGlobesConfig extends Config
 		description = "Change the stroke width of the progress arc",
 		position = 9
 	)
+	@Units(Units.PIXELS)
 	default int progressArcStrokeWidth()
 	{
 		return 2;
@@ -152,6 +154,7 @@ public interface XpGlobesConfig extends Config
 		description = "Change the size of the xp orbs",
 		position = 10
 	)
+	@Units(Units.PIXELS)
 	default int xpOrbSize()
 	{
 		return 40;
@@ -163,8 +166,27 @@ public interface XpGlobesConfig extends Config
 		description = "Change the duration the xp orbs are visible",
 		position = 11
 	)
+	@Units(Units.SECONDS)
 	default int xpOrbDuration()
 	{
 		return 10;
 	}
+
+	@ConfigItem(
+		keyName = "alignOrbsVertically",
+		name = "Vertical Orbs",
+		description = "Aligns the orbs vertically instead of horizontally.",
+		hidden = true
+	)
+	default boolean alignOrbsVertically()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "alignOrbsVertically",
+		name = "",
+		description = ""
+	)
+	void setAlignOrbsVertically(Boolean alignOrbsVertically);
 }

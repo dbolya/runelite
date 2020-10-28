@@ -25,6 +25,9 @@
  */
 package net.runelite.client.plugins.timetracking.farming;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.inject.Singleton;
 import java.util.Collections;
 import java.util.Comparator;
@@ -42,7 +45,7 @@ import net.runelite.client.plugins.timetracking.Tab;
 class FarmingWorld
 {
 	@Getter
-	private Map<Integer, FarmingRegion> regions = new HashMap<>();
+	private Multimap<Integer, FarmingRegion> regions = HashMultimap.create();
 
 	@Getter
 	private Map<Tab, Set<FarmingPatch>> tabs = new HashMap<>();
@@ -51,6 +54,9 @@ class FarmingWorld
 		.comparing(FarmingPatch::getImplementation)
 		.thenComparing((FarmingPatch p) -> p.getRegion().getName())
 		.thenComparing(FarmingPatch::getName);
+
+	@Getter
+	private final FarmingRegion farmingGuildRegion;
 
 	FarmingWorld()
 	{
@@ -67,7 +73,8 @@ class FarmingWorld
 			new FarmingPatch("North", Varbits.FARMING_4771, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("South", Varbits.FARMING_4772, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("", Varbits.FARMING_4773, PatchImplementation.FLOWER),
-			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB)
+			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB),
+			new FarmingPatch("", Varbits.FARMING_4775, PatchImplementation.COMPOST)
 		));
 
 		add(new FarmingRegion("Brimhaven", 11058,
@@ -79,11 +86,30 @@ class FarmingWorld
 			new FarmingPatch("North", Varbits.FARMING_4771, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("South", Varbits.FARMING_4772, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("", Varbits.FARMING_4773, PatchImplementation.FLOWER),
-			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB)
-		));
+			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB),
+			new FarmingPatch("", Varbits.FARMING_4775, PatchImplementation.COMPOST)
+		)
+		{
+			@Override
+			public boolean isInBounds(WorldPoint loc)
+			{
+				if (loc.getY() < 3456)
+				{
+					return loc.getX() <= 2840 && loc.getY() > 3440;
+				}
+				return true;
+			}
+		}, 11061, 11318, 11317);
 		add(new FarmingRegion("Catherby", 11317,
 			new FarmingPatch("", Varbits.FARMING_4771, PatchImplementation.FRUIT_TREE)
-		));
+		)
+		{
+			@Override
+			public boolean isInBounds(WorldPoint loc)
+			{
+				return loc.getX() > 2840 || loc.getY() < 3440;
+			}
+		});
 
 		add(new FarmingRegion("Champions' Guild", 12596,
 			new FarmingPatch("", Varbits.FARMING_4771, PatchImplementation.BUSH)
@@ -109,7 +135,8 @@ class FarmingWorld
 			new FarmingPatch("North West", Varbits.FARMING_4771, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("South East", Varbits.FARMING_4772, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("", Varbits.FARMING_4773, PatchImplementation.FLOWER),
-			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB)
+			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB),
+			new FarmingPatch("", Varbits.FARMING_4775, PatchImplementation.COMPOST)
 		)
 		{
 			@Override
@@ -143,7 +170,8 @@ class FarmingWorld
 			new FarmingPatch("North East", Varbits.FARMING_4771, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("South West", Varbits.FARMING_4772, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("", Varbits.FARMING_4773, PatchImplementation.FLOWER),
-			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB)
+			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB),
+			new FarmingPatch("", Varbits.FARMING_4775, PatchImplementation.COMPOST)
 		));
 		add(new FarmingRegion("Kourend", 6711,
 			new FarmingPatch("", Varbits.FARMING_7904, PatchImplementation.SPIRIT_TREE)
@@ -181,7 +209,8 @@ class FarmingWorld
 			new FarmingPatch("North West", Varbits.FARMING_4771, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("South East", Varbits.FARMING_4772, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("", Varbits.FARMING_4773, PatchImplementation.FLOWER),
-			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB)
+			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.HERB),
+			new FarmingPatch("", Varbits.FARMING_4775, PatchImplementation.COMPOST)
 		));
 
 
@@ -229,13 +258,14 @@ class FarmingWorld
 			new FarmingPatch("Hespori", Varbits.FARMING_7908, PatchImplementation.HESPORI)
 		));
 
-		add(new FarmingRegion("Farming Guild", 4922,
+		add(farmingGuildRegion = new FarmingRegion("Farming Guild", 4922,
 			new FarmingPatch("", Varbits.FARMING_7905, PatchImplementation.TREE),
 			new FarmingPatch("", Varbits.FARMING_4775, PatchImplementation.HERB),
 			new FarmingPatch("", Varbits.FARMING_4772, PatchImplementation.BUSH),
 			new FarmingPatch("", Varbits.FARMING_7906, PatchImplementation.FLOWER),
 			new FarmingPatch("North", Varbits.FARMING_4773, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("South", Varbits.FARMING_4774, PatchImplementation.ALLOTMENT),
+			new FarmingPatch("", Varbits.FARMING_7912, PatchImplementation.GIANT_COMPOST),
 			new FarmingPatch("", Varbits.FARMING_7904, PatchImplementation.CACTUS),
 			new FarmingPatch("", Varbits.FARMING_4771, PatchImplementation.SPIRIT_TREE),
 			new FarmingPatch("", Varbits.FARMING_7909, PatchImplementation.FRUIT_TREE),
@@ -248,11 +278,12 @@ class FarmingWorld
 			new FarmingPatch("North", Varbits.FARMING_4771, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("South", Varbits.FARMING_4772, PatchImplementation.ALLOTMENT),
 			new FarmingPatch("", Varbits.FARMING_4773, PatchImplementation.FLOWER),
-			new FarmingPatch("", Varbits.FARMING_4775, PatchImplementation.CRYSTAL_TREE)
+			new FarmingPatch("", Varbits.FARMING_4775, PatchImplementation.CRYSTAL_TREE),
+			new FarmingPatch("", Varbits.FARMING_4774, PatchImplementation.COMPOST) // TODO: Find correct varbit
 		));
 
 		// Finalize
-		this.regions = Collections.unmodifiableMap(regions);
+		this.regions = Multimaps.unmodifiableMultimap(regions);
 		Map<Tab, Set<FarmingPatch>> umtabs = new TreeMap<>();
 		for (Map.Entry<Tab, Set<FarmingPatch>> e : tabs.entrySet())
 		{

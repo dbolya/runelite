@@ -73,6 +73,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 import net.runelite.http.api.xp.XpClient;
+import okhttp3.OkHttpClient;
 
 @PluginDescriptor(
 	name = "XP Tracker",
@@ -116,6 +117,9 @@ public class XpTrackerPlugin extends Plugin
 	@Inject
 	private OverlayManager overlayManager;
 
+	@Inject
+	private XpClient xpClient;
+
 	private NavigationButton navButton;
 	@Setter(AccessLevel.PACKAGE)
 	@VisibleForTesting
@@ -127,7 +131,6 @@ public class XpTrackerPlugin extends Plugin
 	private long lastXp = 0;
 	private boolean initializeTracker;
 
-	private final XpClient xpClient = new XpClient();
 	private final XpState xpState = new XpState();
 	private final XpPauseState xpPauseState = new XpPauseState();
 
@@ -135,6 +138,12 @@ public class XpTrackerPlugin extends Plugin
 	XpTrackerConfig provideConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(XpTrackerConfig.class);
+	}
+
+	@Provides
+	XpClient provideXpClient(OkHttpClient okHttpClient)
+	{
+		return new XpClient(okHttpClient);
 	}
 
 	@Override
@@ -368,8 +377,9 @@ public class XpTrackerPlugin extends Plugin
 		final Actor interacting = client.getLocalPlayer().getInteracting();
 		if (interacting instanceof NPC && COMBAT.contains(skill))
 		{
+			final int xpModifier = worldSetToType(client.getWorldType()).getXpModifier();
 			final NPC npc = (NPC) interacting;
-			xpState.updateNpcExperience(skill, npc, npcManager.getHealth(npc.getName(), npc.getCombatLevel()));
+			xpState.updateNpcExperience(skill, npc, npcManager.getHealth(npc.getId()), xpModifier);
 		}
 
 		final XpUpdateResult updateResult = xpState.updateSkill(skill, currentXp, startGoalXp, endGoalXp);
@@ -392,7 +402,7 @@ public class XpTrackerPlugin extends Plugin
 
 		for (Skill skill : COMBAT)
 		{
-			final XpUpdateResult updateResult = xpState.updateNpcKills(skill, npc, npcManager.getHealth(npc.getName(), npc.getCombatLevel()));
+			final XpUpdateResult updateResult = xpState.updateNpcKills(skill, npc, npcManager.getHealth(npc.getId()));
 			final boolean updated = XpUpdateResult.UPDATED.equals(updateResult);
 			xpPanel.updateSkillExperience(updated, xpPauseState.isPaused(skill), skill, xpState.getSkillSnapshot(skill));
 		}
