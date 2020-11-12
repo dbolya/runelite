@@ -355,7 +355,7 @@ class ConfigPanel extends PluginPanel
 					max = range.max();
 				}
 
-				// Config may previously have been out of range
+				// config may previously have been out of range
 				value = Ints.constrainToRange(value, min, max);
 
 				SpinnerModel model = new SpinnerNumberModel(value, min, max, 1);
